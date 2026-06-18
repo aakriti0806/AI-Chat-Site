@@ -1,0 +1,157 @@
+Create a Full-Stack AI Chatbot Website
+
+Build a modern, professional, and fully responsive AI Chatbot web application similar to ChatGPT and Claude.
+
+Tech Stack
+Frontend: HTML5, CSS3, JavaScript (or React + Vite)
+Backend: Node.js + Express.js
+Database: MongoDB
+Authentication: JWT Authentication
+Password Encryption: bcrypt
+API Integration: OpenAI/Claude API support
+Responsive Design for Mobile, Tablet, and Desktop
+Pages Required
+1. Landing Page
+Modern hero section
+Attractive navbar
+Features section
+Pricing section
+Testimonials section
+FAQ section
+Footer
+Dark/Light Mode Toggle
+Smooth animations
+2. Sign Up Page
+Full Name
+Email
+Password
+Confirm Password
+Show/Hide Password
+Google Sign Up Button
+Form Validation
+Success/Error Messages
+3. Sign In Page
+Email
+Password
+Remember Me
+Forgot Password
+Google Login
+JWT Authentication
+4. Dashboard
+User Profile
+Chat History Sidebar
+Create New Chat
+Delete Chat
+Rename Chat
+Search Chats
+Settings Panel
+5. AI Chat Interface
+ChatGPT/Claude-style UI
+User Message Bubble
+AI Message Bubble
+Typing Animation
+Markdown Support
+Code Syntax Highlighting
+Copy Message Button
+Regenerate Response
+Stop Generating Button
+Message Timestamp
+Auto Scroll
+File Upload Support
+Image Upload Support
+Additional Features
+Voice Input (Speech-to-Text)
+Text-to-Speech Response
+Export Chat as PDF
+Export Chat as TXT
+Chat Search
+Chat Categories
+User Theme Preferences
+Notification System
+Online/Offline Status
+Keyboard Shortcuts
+User Authentication Features
+Sign Up
+Sign In
+Sign Out
+Forgot Password
+Reset Password
+Email Verification
+Profile Update
+Change Password
+Delete Account
+Admin Panel
+Admin Login
+User Management
+Chat Analytics
+Total Users
+Total Messages
+Active Users
+API Usage Statistics
+Database Collections
+
+Users:
+
+id
+fullname
+email
+password
+avatar
+role
+createdAt
+
+Chats:
+
+id
+userId
+title
+messages
+createdAt
+
+Messages:
+
+id
+chatId
+sender
+content
+timestamp
+UI Design Requirements
+Inspired by Claude + ChatGPT
+Clean minimalist design
+Glassmorphism effects
+Smooth animations
+Gradient backgrounds
+Modern cards
+Professional typography
+Beautiful loading skeletons
+Fully responsive layout
+Security
+JWT Authentication
+Password Hashing
+Rate Limiting
+Input Validation
+XSS Protection
+CORS Configuration
+Secure Environment Variables
+Folder Structure
+project/
+│
+├── frontend/
+│   ├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── hooks/
+│   ├── assets/
+│   └── App.jsx
+│
+├── backend/
+│   ├── controllers/
+│   ├── models/
+│   ├── routes/
+│   ├── middleware/
+│   ├── config/
+│   └── server.js
+│
+├── .env
+├── package.json
+└── README.md
