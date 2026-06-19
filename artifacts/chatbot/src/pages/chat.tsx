@@ -163,7 +163,7 @@ export function ChatLayout() {
             <div className="pb-4">
               {localMessages.map((msg, i) => (
                 <ChatMessage 
-                  key={msg.id || i} 
+                  key={msg.id != null ? `db-${msg.id}` : `local-${i}`} 
                   role={msg.role} 
                   content={msg.content}
                   isStreaming={isStreaming && i === localMessages.length - 1 && msg.role === "assistant" && !msg.content}

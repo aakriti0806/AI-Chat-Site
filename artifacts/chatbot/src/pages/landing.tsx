@@ -35,7 +35,7 @@ export function LandingPage() {
         <section className="px-6 lg:px-12 py-24 md:py-32 max-w-7xl mx-auto flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8">
             <Sparkles size={14} />
-            <span>Now featuring GPT-4 Omni</span>
+            <span>Now powered by Gemini 2.5 Flash</span>
           </div>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 max-w-4xl text-balance">
             Your intelligent assistant for <span className="text-primary">deep work</span>

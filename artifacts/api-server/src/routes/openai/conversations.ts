@@ -13,13 +13,23 @@ import {
   SendOpenaiMessageBody,
 } from "@workspace/api-zod";
 import { GoogleGenAI } from "@google/genai";
-import { requireAuth, getAuth } from "@clerk/express";
+import { getAuth } from "@clerk/express";
+import type { Request, Response, NextFunction } from "express";
+
+function enforceAuth(req: Request, res: Response, next: NextFunction) {
+  const { userId } = getAuth(req);
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  next();
+}
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const router = Router();
 
-router.use(requireAuth());
+router.use(enforceAuth);
 
 router.get("/conversations", async (req, res) => {
   const userId = getAuth(req).userId!;
@@ -171,6 +181,31 @@ router.post("/conversations/:id/messages", async (req, res) => {
     parts: [{ text: m.content }],
   }));
 
+  // Build current date/time in Asia/Kolkata (IST)
+  const nowIST = new Date().toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+
+  const systemInstruction = `You are a helpful AI assistant. Always use real-time information when available.
+
+CURRENT DATE AND TIME (IST — Asia/Kolkata): ${nowIST}
+
+When the user asks about the current date, time, day of the week, month, or year — always answer using the exact date and time provided above. Never rely on your training data for date/time questions.
+
+You have access to Google Search. Use it to answer questions about:
+- Latest news, movies, sports scores, weather
+- Current events or anything time-sensitive
+- Bollywood or Hollywood releases, trending topics
+Always prefer live search results over your training data for anything that may have changed recently.`;
+
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
@@ -179,6 +214,10 @@ router.post("/conversations/:id/messages", async (req, res) => {
   try {
     const chat = ai.chats.create({
       model: "gemini-2.5-flash",
+      config: {
+        systemInstruction,
+        tools: [{ googleSearch: {} }],
+      },
       history: geminiHistory,
     });
 
