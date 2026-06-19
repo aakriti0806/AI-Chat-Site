@@ -12,12 +12,10 @@ import {
   SendOpenaiMessageParams,
   SendOpenaiMessageBody,
 } from "@workspace/api-zod";
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { requireAuth, getAuth } from "@clerk/express";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const router = Router();
 
@@ -167,9 +165,10 @@ router.post("/conversations/:id/messages", async (req, res) => {
     .where(eq(messages.conversationId, convId))
     .orderBy(messages.createdAt);
 
-  const chatMessages = history.map((m) => ({
-    role: m.role as "user" | "assistant" | "system",
-    content: m.content,
+  // Build Gemini content array from history (exclude the last user message — passed separately)
+  const geminiHistory = history.slice(0, -1).map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
   }));
 
   res.setHeader("Content-Type", "text/event-stream");
@@ -178,18 +177,18 @@ router.post("/conversations/:id/messages", async (req, res) => {
 
   let fullResponse = "";
   try {
-    const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_completion_tokens: 8192,
-      messages: chatMessages,
-      stream: true,
+    const chat = ai.chats.create({
+      model: "gemini-2.5-flash",
+      history: geminiHistory,
     });
 
+    const stream = await chat.sendMessageStream({ message: body.data.content });
+
     for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        fullResponse += content;
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      const text = chunk.text;
+      if (text) {
+        fullResponse += text;
+        res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
       }
     }
 
@@ -202,7 +201,8 @@ router.post("/conversations/:id/messages", async (req, res) => {
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     res.end();
   } catch (err) {
-    res.write(`data: ${JSON.stringify({ error: "AI error occurred" })}\n\n`);
+    const message = err instanceof Error ? err.message : "AI error occurred";
+    res.write(`data: ${JSON.stringify({ error: message })}\n\n`);
     res.end();
   }
 });
