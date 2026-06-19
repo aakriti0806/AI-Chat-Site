@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "gasWqP2cbeaGseKMLkFxe"
+uri = "file://README.md"
+type = "text"
+title = "NexusAI — README.md"
