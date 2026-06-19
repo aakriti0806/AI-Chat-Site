@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { conversations, messages } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import {
   CreateOpenaiConversationBody,
   RenameOpenaiConversationBody,
@@ -13,6 +13,7 @@ import {
   SendOpenaiMessageBody,
 } from "@workspace/api-zod";
 import OpenAI from "openai";
+import { requireAuth, getAuth } from "@clerk/express";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -20,15 +21,20 @@ const openai = new OpenAI({
 
 const router = Router();
 
+router.use(requireAuth());
+
 router.get("/conversations", async (req, res) => {
+  const userId = getAuth(req).userId!;
   const convs = await db
     .select()
     .from(conversations)
+    .where(eq(conversations.userId, userId))
     .orderBy(desc(conversations.createdAt));
   res.json(convs);
 });
 
 router.post("/conversations", async (req, res) => {
+  const userId = getAuth(req).userId!;
   const parsed = CreateOpenaiConversationBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request body" });
@@ -36,12 +42,13 @@ router.post("/conversations", async (req, res) => {
   }
   const [conv] = await db
     .insert(conversations)
-    .values({ title: parsed.data.title })
+    .values({ title: parsed.data.title, userId })
     .returning();
   res.status(201).json(conv);
 });
 
 router.get("/conversations/:id", async (req, res) => {
+  const userId = getAuth(req).userId!;
   const params = GetOpenaiConversationParams.safeParse({ id: Number(req.params.id) });
   if (!params.success) {
     res.status(400).json({ error: "Invalid id" });
@@ -50,7 +57,7 @@ router.get("/conversations/:id", async (req, res) => {
   const [conv] = await db
     .select()
     .from(conversations)
-    .where(eq(conversations.id, params.data.id));
+    .where(and(eq(conversations.id, params.data.id), eq(conversations.userId, userId)));
   if (!conv) {
     res.status(404).json({ error: "Conversation not found" });
     return;
@@ -64,6 +71,7 @@ router.get("/conversations/:id", async (req, res) => {
 });
 
 router.delete("/conversations/:id", async (req, res) => {
+  const userId = getAuth(req).userId!;
   const params = DeleteOpenaiConversationParams.safeParse({ id: Number(req.params.id) });
   if (!params.success) {
     res.status(400).json({ error: "Invalid id" });
@@ -72,7 +80,7 @@ router.delete("/conversations/:id", async (req, res) => {
   const [conv] = await db
     .select()
     .from(conversations)
-    .where(eq(conversations.id, params.data.id));
+    .where(and(eq(conversations.id, params.data.id), eq(conversations.userId, userId)));
   if (!conv) {
     res.status(404).json({ error: "Conversation not found" });
     return;
@@ -82,6 +90,7 @@ router.delete("/conversations/:id", async (req, res) => {
 });
 
 router.patch("/conversations/:id", async (req, res) => {
+  const userId = getAuth(req).userId!;
   const params = RenameOpenaiConversationParams.safeParse({ id: Number(req.params.id) });
   const body = RenameOpenaiConversationBody.safeParse(req.body);
   if (!params.success || !body.success) {
@@ -91,7 +100,7 @@ router.patch("/conversations/:id", async (req, res) => {
   const [conv] = await db
     .select()
     .from(conversations)
-    .where(eq(conversations.id, params.data.id));
+    .where(and(eq(conversations.id, params.data.id), eq(conversations.userId, userId)));
   if (!conv) {
     res.status(404).json({ error: "Conversation not found" });
     return;
@@ -105,9 +114,18 @@ router.patch("/conversations/:id", async (req, res) => {
 });
 
 router.get("/conversations/:id/messages", async (req, res) => {
+  const userId = getAuth(req).userId!;
   const params = ListOpenaiMessagesParams.safeParse({ id: Number(req.params.id) });
   if (!params.success) {
     res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const [conv] = await db
+    .select()
+    .from(conversations)
+    .where(and(eq(conversations.id, params.data.id), eq(conversations.userId, userId)));
+  if (!conv) {
+    res.status(404).json({ error: "Conversation not found" });
     return;
   }
   const msgs = await db
@@ -119,6 +137,7 @@ router.get("/conversations/:id/messages", async (req, res) => {
 });
 
 router.post("/conversations/:id/messages", async (req, res) => {
+  const userId = getAuth(req).userId!;
   const params = SendOpenaiMessageParams.safeParse({ id: Number(req.params.id) });
   const body = SendOpenaiMessageBody.safeParse(req.body);
   if (!params.success || !body.success) {
@@ -127,7 +146,10 @@ router.post("/conversations/:id/messages", async (req, res) => {
   }
 
   const convId = params.data.id;
-  const [conv] = await db.select().from(conversations).where(eq(conversations.id, convId));
+  const [conv] = await db
+    .select()
+    .from(conversations)
+    .where(and(eq(conversations.id, convId), eq(conversations.userId, userId)));
   if (!conv) {
     res.status(404).json({ error: "Conversation not found" });
     return;

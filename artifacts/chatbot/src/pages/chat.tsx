@@ -140,7 +140,7 @@ export function ChatLayout() {
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground">
               {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
             </Button>
-            <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
+            <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
           </div>
         </header>
 

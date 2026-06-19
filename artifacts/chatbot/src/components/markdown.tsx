@@ -9,9 +9,9 @@ export const MarkdownRenderer = memo(
       <Markdown
         className="prose prose-sm dark:prose-invert max-w-none break-words"
         components={{
-          code({ node, inline, className, children, ...props }: any) {
+          code({ node, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || "");
-            return !inline && match ? (
+            return match ? (
               <SyntaxHighlighter
                 {...props}
                 style={vscDarkPlus}
